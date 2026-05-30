@@ -33,12 +33,25 @@ POST   /found
 GET    /matches/{lost_id}
 ```
 
+`/lost`, `/found` 요청의 `item_id`는 선택값입니다. 백엔드 DB의 item id를 넣으면 AI 서버는 그 값을 그대로 `lost_id`, `found_id`로 저장하고 응답합니다. 생략하면 AI 서버가 `lost_<uuid>`, `found_<uuid>` 형태의 id를 생성합니다.
+
 ## 핵심 동작
 
 - 분실물 등록: 기존 습득물 DB에서 top5 검색 후 cache 저장
 - 습득물 등록: 새 습득물과 모든 분실물 embedding만 비교해서 top5 cache 갱신
 
 ## 요청 예시
+
+권장 요청:
+
+```json
+{
+  "item_id": "123",
+  "image_url": "http://localhost:8000/images/example.jpg"
+}
+```
+
+하위 호환 요청:
 
 ```json
 {

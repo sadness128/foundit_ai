@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 class ImageRequest(BaseModel):
     image_url: str
+    item_id: str | None = None
 
 
 UPLOAD_DIR = Path(os.getenv("FOUNDIT_UPLOAD_DIR", "./uploaded_images"))
@@ -58,6 +59,12 @@ def create_ai_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex}"
 
 
+def resolve_item_id(req: ImageRequest, prefix: str) -> str:
+    if req.item_id and req.item_id.strip():
+        return req.item_id.strip()
+    return create_ai_id(prefix)
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -84,7 +91,7 @@ def register_lost(req: ImageRequest):
     if store.exists_by_hash(store.lost_col, h):
         raise HTTPException(status_code=409, detail="이미 등록된 분실물입니다.")
 
-    lost_id = create_ai_id("lost")
+    lost_id = resolve_item_id(req, "lost")
     emb = embed_image(image)
 
     store.add_item(store.lost_col, lost_id, image_url, h, emb)
@@ -106,7 +113,7 @@ def register_found(req: ImageRequest):
     if store.exists_by_hash(store.found_col, h):
         raise HTTPException(status_code=409, detail="이미 등록된 습득물입니다.")
 
-    found_id = create_ai_id("found")
+    found_id = resolve_item_id(req, "found")
     found_emb = embed_image(image)
 
     store.add_item(store.found_col, found_id, image_url, h, found_emb)
