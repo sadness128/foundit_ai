@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+chroma_db/
+uploaded_images/
+*.sqlite3
