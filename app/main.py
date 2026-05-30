@@ -1,5 +1,6 @@
 import hashlib
 import os
+import time
 import uuid
 from io import BytesIO
 from pathlib import Path
@@ -96,6 +97,7 @@ async def upload(file: UploadFile = File(...)):
 
 @app.post("/api/ai/lost")
 def register_lost(req: LostRequest):
+    started_at = time.perf_counter()
     validate_image_urls(req.image_url)
     for image_url, h, embedding in embed_image_urls(req.image_url):
         store.add_item_image(store.lost_col, "lost", req.lost_id, image_url, h, embedding)
@@ -103,14 +105,17 @@ def register_lost(req: LostRequest):
     top5 = store.search_top5_for_lost(req.lost_id)
     store.set_cache(req.lost_id, top5)
 
-    return {
+    response_body = {
         "lost_id": req.lost_id,
         "matches": store.to_match_response(top5),
     }
+    print(f"[POST /api/ai/lost] response={response_body} elapsed={time.perf_counter() - started_at:.3f}s")
+    return response_body
 
 
 @app.post("/api/ai/found")
 def register_found(req: FoundRequest):
+    started_at = time.perf_counter()
     validate_image_urls(req.image_url)
     for image_url, h, embedding in embed_image_urls(req.image_url):
         store.add_item_image(store.found_col, "found", req.found_id, image_url, h, embedding)
@@ -129,10 +134,12 @@ def register_found(req: FoundRequest):
                 }
             )
 
-    return {
+    response_body = {
         "registered_found_id": req.found_id,
         "updated_lost_items": updated,
     }
+    print(f"[POST /api/ai/found] response={response_body} elapsed={time.perf_counter() - started_at:.3f}s")
+    return response_body
 
 
 @app.get("/api/ai/matches/{lost_id}")
